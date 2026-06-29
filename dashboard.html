@@ -2,57 +2,146 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Telemetría Comunitaria — UMA Net</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UMA Net — Telemetría Comunitaria</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
-  body { font-family: sans-serif; background:#f4f6f5; margin:0; padding:24px; }
-  h1 { font-size:20px; }
-  .tarjeta { background:white; border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
-  .semaforo { display:flex; align-items:center; gap:16px; }
-  .luz { width:60px; height:60px; border-radius:50%; background:#ccc; }
-  .luz.verde { background:#2ecc71; }
-  .luz.amarillo { background:#f1c40f; }
-  .luz.rojo { background:#e74c3c; }
-  .dato { font-size:28px; font-weight:bold; }
-  .momento { color:#777; font-size:13px; }
+  :root {
+    --marca: #0f766e;
+    --marca-claro: #e7f5f3;
+    --texto: #1f2937;
+    --texto-suave: #6b7280;
+    --rojo: #e74c3c;
+    --amarillo: #f1c40f;
+    --verde: #27ae60;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #f4f6f5;
+    margin: 0;
+    padding: 0;
+    color: var(--texto);
+  }
+  header {
+    background: var(--marca);
+    color: white;
+    padding: 18px 24px;
+  }
+  header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+  header p { margin: 2px 0 0; font-size: 13px; opacity: 0.85; }
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .tarjeta {
+    background: white;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .tarjeta-titulo {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 16px;
+  }
+  .tarjeta-titulo h2 { margin: 0; font-size: 15px; font-weight: 600; }
+  .momento { color: var(--texto-suave); font-size: 12px; }
+  .fila-nivel { display: flex; align-items: center; gap: 24px; }
+  .dato-grande { font-size: 40px; font-weight: 700; line-height: 1; }
+  .estado-texto { font-size: 13px; font-weight: 600; margin-top: 6px; }
+  .boton {
+    background: var(--marca);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .boton:hover { opacity: 0.9; }
+  footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--texto-suave);
+    padding: 20px;
+  }
 </style>
 </head>
 <body>
-  <h1>UMA Net — Los Cocos</h1>
 
+<header>
+  <h1>UMA Net</h1>
+  <p>Telemetría comunitaria — Los Cocos · Humanidad Colaborativa</p>
+</header>
+
+<main>
   <div class="tarjeta">
-    <div class="semaforo">
-      <div id="luz" class="luz"></div>
+    <div class="tarjeta-titulo">
+      <h2>Nivel actual del tanque</h2>
+      <span class="momento" id="momento">Cargando...</span>
+    </div>
+    <div class="fila-nivel">
+      <svg width="90" height="160" viewBox="0 0 90 160">
+        <rect x="5" y="10" width="80" height="140" rx="10" fill="none" stroke="#d1d5db" stroke-width="2"/>
+        <rect id="tankFill" x="5" width="80" height="0" rx="10" fill="#27ae60"/>
+        <line x1="0" y1="122" x2="90" y2="122" stroke="var(--rojo)" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="45" y="135" text-anchor="middle" font-size="9" fill="#9ca3af">alerta baja 20%</text>
+      </svg>
       <div>
-        <div id="nivel" class="dato">--%</div>
-        <div id="momento" class="momento">Cargando...</div>
+        <div id="nivel" class="dato-grande">--%</div>
+        <div id="estado" class="estado-texto"></div>
       </div>
     </div>
   </div>
 
   <div class="tarjeta">
-    <canvas id="grafico" height="100"></canvas>
+    <div class="tarjeta-titulo">
+      <h2>Histórico — últimas 24 horas</h2>
+      <button class="boton" onclick="descargarCSV()">Descargar CSV</button>
+    </div>
+    <canvas id="grafico" height="110"></canvas>
   </div>
+</main>
+
+<footer>
+  Asociación Civil Humanidad Colaborativa — Programa UMA Net
+</footer>
 
 <script>
 const SITIO = "los_cocos";
+let ultimosDatos = [];
+
+function colorEstado(nivel) {
+  if (nivel < 20) return { color: "#e74c3c", texto: "Alerta — nivel bajo" };
+  if (nivel < 50) return { color: "#f1c40f", texto: "Atención — nivel medio" };
+  return { color: "#27ae60", texto: "Nivel normal" };
+}
 
 async function actualizarUltimo() {
   try {
     const res = await fetch(`/lecturas/${SITIO}/ultimo`);
     if (!res.ok) return;
     const data = await res.json();
+    const estado = colorEstado(data.nivel);
+
     document.getElementById("nivel").textContent = data.nivel.toFixed(1) + "%";
+    document.getElementById("nivel").style.color = estado.color;
+    document.getElementById("estado").textContent = estado.texto;
+    document.getElementById("estado").style.color = estado.color;
     document.getElementById("momento").textContent = "Última lectura: " + new Date(data.momento).toLocaleString();
 
-    const luz = document.getElementById("luz");
-    luz.className = "luz";
-    if (data.nivel < 20) luz.classList.add("rojo");
-    else if (data.nivel < 50) luz.classList.add("amarillo");
-    else luz.classList.add("verde");
-  } catch (e) {
-    console.error(e);
-  }
+    const alturaTotal = 140;
+    const alturaFill = (data.nivel / 100) * alturaTotal;
+    const tankFill = document.getElementById("tankFill");
+    tankFill.setAttribute("y", 150 - alturaFill);
+    tankFill.setAttribute("height", alturaFill);
+    tankFill.setAttribute("fill", estado.color);
+  } catch (e) { console.error(e); }
 }
 
 let grafico;
@@ -61,27 +150,70 @@ async function actualizarHistorial() {
     const res = await fetch(`/lecturas/${SITIO}`);
     if (!res.ok) return;
     const data = await res.json();
-    const etiquetas = data.lecturas.map(l => new Date(l.momento).toLocaleTimeString());
-    const valores = data.lecturas.map(l => l.nivel);
+    ultimosDatos = data.lecturas;
+
+    const etiquetas = ultimosDatos.map(l => new Date(l.momento).toLocaleTimeString());
+    const valores = ultimosDatos.map(l => l.nivel);
+    const umbral = valores.map(() => 20);
 
     if (!grafico) {
       const ctx = document.getElementById("grafico").getContext("2d");
+      const gradiente = ctx.createLinearGradient(0, 0, 0, 200);
+      gradiente.addColorStop(0, "rgba(15,118,110,0.35)");
+      gradiente.addColorStop(1, "rgba(15,118,110,0.02)");
+
       grafico = new Chart(ctx, {
         type: "line",
         data: {
           labels: etiquetas,
-          datasets: [{ label: "Nivel de agua (%)", data: valores, borderColor: "#2980b9", tension: 0.3 }]
+          datasets: [
+            {
+              label: "Nivel de agua (%)",
+              data: valores,
+              borderColor: "#0f766e",
+              backgroundColor: gradiente,
+              fill: true,
+              tension: 0.3,
+              pointRadius: 0,
+              borderWidth: 2
+            },
+            {
+              label: "Alerta baja (20%)",
+              data: umbral,
+              borderColor: "#e74c3c",
+              borderDash: [5, 5],
+              borderWidth: 1.5,
+              pointRadius: 0,
+              fill: false
+            }
+          ]
         },
-        options: { responsive: true, scales: { y: { min: 0, max: 100 } } }
+        options: {
+          responsive: true,
+          scales: { y: { min: 0, max: 100 } },
+          plugins: { legend: { display: true, position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } } }
+        }
       });
     } else {
       grafico.data.labels = etiquetas;
       grafico.data.datasets[0].data = valores;
+      grafico.data.datasets[1].data = umbral;
       grafico.update();
     }
-  } catch (e) {
-    console.error(e);
-  }
+  } catch (e) { console.error(e); }
+}
+
+function descargarCSV() {
+  if (!ultimosDatos.length) return;
+  let csv = "momento,nivel\n";
+  ultimosDatos.forEach(l => { csv += `${l.momento},${l.nivel}\n`; });
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `telemetria_${SITIO}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 actualizarUltimo();
