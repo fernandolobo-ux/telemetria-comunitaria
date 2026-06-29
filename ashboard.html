@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Telemetría Comunitaria — UMA Net</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  body { font-family: sans-serif; background:#f4f6f5; margin:0; padding:24px; }
+  h1 { font-size:20px; }
+  .tarjeta { background:white; border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+  .semaforo { display:flex; align-items:center; gap:16px; }
+  .luz { width:60px; height:60px; border-radius:50%; background:#ccc; }
+  .luz.verde { background:#2ecc71; }
+  .luz.amarillo { background:#f1c40f; }
+  .luz.rojo { background:#e74c3c; }
+  .dato { font-size:28px; font-weight:bold; }
+  .momento { color:#777; font-size:13px; }
+</style>
+</head>
+<body>
+  <h1>UMA Net — Los Cocos</h1>
+
+  <div class="tarjeta">
+    <div class="semaforo">
+      <div id="luz" class="luz"></div>
+      <div>
+        <div id="nivel" class="dato">--%</div>
+        <div id="momento" class="momento">Cargando...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tarjeta">
+    <canvas id="grafico" height="100"></canvas>
+  </div>
+
+<script>
+const SITIO = "los_cocos";
+
+async function actualizarUltimo() {
+  try {
+    const res = await fetch(`/lecturas/${SITIO}/ultimo`);
+    if (!res.ok) return;
+    const data = await res.json();
+    document.getElementById("nivel").textContent = data.nivel.toFixed(1) + "%";
+    document.getElementById("momento").textContent = "Última lectura: " + new Date(data.momento).toLocaleString();
+
+    const luz = document.getElementById("luz");
+    luz.className = "luz";
+    if (data.nivel < 20) luz.classList.add("rojo");
+    else if (data.nivel < 50) luz.classList.add("amarillo");
+    else luz.classList.add("verde");
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+let grafico;
+async function actualizarHistorial() {
+  try {
+    const res = await fetch(`/lecturas/${SITIO}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const etiquetas = data.lecturas.map(l => new Date(l.momento).toLocaleTimeString());
+    const valores = data.lecturas.map(l => l.nivel);
+
+    if (!grafico) {
+      const ctx = document.getElementById("grafico").getContext("2d");
+      grafico = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: etiquetas,
+          datasets: [{ label: "Nivel de agua (%)", data: valores, borderColor: "#2980b9", tension: 0.3 }]
+        },
+        options: { responsive: true, scales: { y: { min: 0, max: 100 } } }
+      });
+    } else {
+      grafico.data.labels = etiquetas;
+      grafico.data.datasets[0].data = valores;
+      grafico.update();
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+actualizarUltimo();
+actualizarHistorial();
+setInterval(actualizarUltimo, 10000);
+setInterval(actualizarHistorial, 30000);
+</script>
+</body>
+</html>

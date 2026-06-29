@@ -1,6 +1,7 @@
 import os
 import ssl
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 import paho.mqtt.client as mqtt
 from influxdb_client import InfluxDBClient, Point
@@ -45,6 +46,9 @@ async def lifespan(app: FastAPI):
     mqtt_client.loop_stop()
 
 app = FastAPI(title="Telemetría Comunitaria", lifespan=lifespan)
+@app.get("/dashboard")
+def dashboard():
+    return FileResponse("dashboard.html")
 
 @app.get("/lecturas/{sitio}")
 def historial(sitio: str):
