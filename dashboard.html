@@ -7,54 +7,55 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
   :root {
-    --marca: #0f766e;
-    --marca-claro: #e7f5f3;
+    --marca: #2D1650;
+    --marca-azul: #2A78AA;
     --texto: #1f2937;
     --texto-suave: #6b7280;
     --rojo: #e74c3c;
     --amarillo: #f1c40f;
-    --verde: #27ae60;
+    --fondo: #f7f8fa;
   }
   * { box-sizing: border-box; }
   body {
     font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: #f4f6f5;
+    background: var(--fondo);
     margin: 0;
-    padding: 0;
     color: var(--texto);
+    font-weight: 400;
   }
   header {
-    background: var(--marca);
-    color: white;
-    padding: 18px 24px;
+    background: white;
+    padding: 18px 28px;
+    border-bottom: 4px solid;
+    border-image: linear-gradient(90deg, var(--marca), var(--marca-azul)) 1;
   }
-  header h1 { margin: 0; font-size: 18px; font-weight: 600; }
-  header p { margin: 2px 0 0; font-size: 13px; opacity: 0.85; }
+  header img { height: 38px; display: block; }
+  header p { margin: 6px 0 0; font-size: 13px; color: var(--texto-suave); }
   main {
     max-width: 720px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 28px 20px;
   }
   .tarjeta {
     background: white;
-    border-radius: 14px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 18px;
+    border: 1px solid #eef0f2;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
   }
   .tarjeta-titulo {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
   }
-  .tarjeta-titulo h2 { margin: 0; font-size: 15px; font-weight: 600; }
+  .tarjeta-titulo h2 { margin: 0; font-size: 14px; font-weight: 600; color: var(--texto); }
   .momento { color: var(--texto-suave); font-size: 12px; }
-  .fila-nivel { display: flex; align-items: center; gap: 24px; }
-  .dato-grande { font-size: 40px; font-weight: 700; line-height: 1; }
-  .estado-texto { font-size: 13px; font-weight: 600; margin-top: 6px; }
+  .contenedor-tanque { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .estado-texto { font-size: 13px; font-weight: 600; }
   .boton {
-    background: var(--marca);
+    background: var(--marca-azul);
     color: white;
     border: none;
     border-radius: 8px;
@@ -68,34 +69,52 @@
     text-align: center;
     font-size: 12px;
     color: var(--texto-suave);
-    padding: 20px;
+    padding: 24px;
   }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>UMA Net</h1>
+  <img src="/umanet_logo.png" alt="UMA Net">
   <p>Telemetría comunitaria — Los Cocos · Humanidad Colaborativa</p>
 </header>
 
 <main>
   <div class="tarjeta">
     <div class="tarjeta-titulo">
-      <h2>Nivel actual del tanque</h2>
+      <h2>Nivel del tanque</h2>
       <span class="momento" id="momento">Cargando...</span>
     </div>
-    <div class="fila-nivel">
-      <svg width="90" height="160" viewBox="0 0 90 160">
-        <rect x="5" y="10" width="80" height="140" rx="10" fill="none" stroke="#d1d5db" stroke-width="2"/>
-        <rect id="tankFill" x="5" width="80" height="0" rx="10" fill="#27ae60"/>
-        <line x1="0" y1="122" x2="90" y2="122" stroke="var(--rojo)" stroke-width="1.5" stroke-dasharray="4 3"/>
-        <text x="45" y="135" text-anchor="middle" font-size="9" fill="#9ca3af">alerta baja 20%</text>
+    <div class="contenedor-tanque">
+      <svg viewBox="0 0 170 240" width="170" height="240">
+        <defs>
+          <clipPath id="tankClip">
+            <rect x="20" y="14" width="100" height="190" rx="22"/>
+          </clipPath>
+        </defs>
+        <rect x="20" y="14" width="100" height="190" rx="22" fill="#eef2f6"/>
+        <g clip-path="url(#tankClip)">
+          <path id="liquidPath" d="" fill="#2A78AA"/>
+        </g>
+        <rect x="20" y="14" width="100" height="190" rx="22" fill="none" stroke="#cbd5e1" stroke-width="3"/>
+
+        <line x1="124" y1="14" x2="130" y2="14" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="134" y="17" font-size="9" fill="#9ca3af">100%</text>
+        <line x1="124" y1="61.5" x2="130" y2="61.5" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="134" y="64.5" font-size="9" fill="#9ca3af">75%</text>
+        <line x1="124" y1="109" x2="130" y2="109" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="134" y="112" font-size="9" fill="#9ca3af">50%</text>
+        <line x1="124" y1="156.5" x2="130" y2="156.5" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="134" y="159.5" font-size="9" fill="#9ca3af">25%</text>
+        <line x1="124" y1="204" x2="130" y2="204" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="134" y="207" font-size="9" fill="#9ca3af">0%</text>
+
+        <rect x="28" y="82" width="84" height="54" rx="12" fill="white" fill-opacity="0.88"/>
+        <text id="tanquePct" x="70" y="108" text-anchor="middle" font-size="24" font-weight="700" fill="#1f2937">--%</text>
+        <text id="tanqueLitros" x="70" y="124" text-anchor="middle" font-size="9.5" fill="#6b7280">Cargando...</text>
       </svg>
-      <div>
-        <div id="nivel" class="dato-grande">--%</div>
-        <div id="estado" class="estado-texto"></div>
-      </div>
+      <div id="estado" class="estado-texto"></div>
     </div>
   </div>
 
@@ -114,12 +133,41 @@
 
 <script>
 const SITIO = "los_cocos";
+const CAPACIDADES = { los_cocos: 30000 }; // litros — dato real del tanque
 let ultimosDatos = [];
 
 function colorEstado(nivel) {
   if (nivel < 20) return { color: "#e74c3c", texto: "Alerta — nivel bajo" };
   if (nivel < 50) return { color: "#f1c40f", texto: "Atención — nivel medio" };
-  return { color: "#27ae60", texto: "Nivel normal" };
+  return { color: "#2A78AA", texto: "Nivel normal" };
+}
+
+function pathOla(y, xIzq, xDer, fondoY, amplitud) {
+  const midX = (xIzq + xDer) / 2;
+  return `M${xIzq},${y} Q${(xIzq+midX)/2},${y-amplitud} ${midX},${y} Q${(midX+xDer)/2},${y+amplitud} ${xDer},${y} L${xDer},${fondoY} L${xIzq},${fondoY} Z`;
+}
+
+function actualizarTanque(nivel) {
+  const top = 14, bottom = 204, izq = 21, der = 119;
+  const pct = Math.max(0, Math.min(100, nivel));
+  const y = bottom - (pct / 100) * (bottom - top);
+
+  document.getElementById("liquidPath").setAttribute("d", pathOla(y, izq, der, bottom, 4));
+
+  const estado = colorEstado(nivel);
+  document.getElementById("liquidPath").setAttribute("fill", estado.color);
+  document.getElementById("estado").textContent = estado.texto;
+  document.getElementById("estado").style.color = estado.color;
+  document.getElementById("tanquePct").textContent = nivel.toFixed(1) + "%";
+
+  const capacidad = CAPACIDADES[SITIO];
+  if (capacidad) {
+    const litros = Math.round((nivel / 100) * capacidad);
+    document.getElementById("tanqueLitros").textContent =
+      `≈ ${litros.toLocaleString("es-AR")} de ${capacidad.toLocaleString("es-AR")} L`;
+  } else {
+    document.getElementById("tanqueLitros").textContent = "Capacidad no configurada";
+  }
 }
 
 async function actualizarUltimo() {
@@ -127,20 +175,8 @@ async function actualizarUltimo() {
     const res = await fetch(`/lecturas/${SITIO}/ultimo`);
     if (!res.ok) return;
     const data = await res.json();
-    const estado = colorEstado(data.nivel);
-
-    document.getElementById("nivel").textContent = data.nivel.toFixed(1) + "%";
-    document.getElementById("nivel").style.color = estado.color;
-    document.getElementById("estado").textContent = estado.texto;
-    document.getElementById("estado").style.color = estado.color;
     document.getElementById("momento").textContent = "Última lectura: " + new Date(data.momento).toLocaleString();
-
-    const alturaTotal = 140;
-    const alturaFill = (data.nivel / 100) * alturaTotal;
-    const tankFill = document.getElementById("tankFill");
-    tankFill.setAttribute("y", 150 - alturaFill);
-    tankFill.setAttribute("height", alturaFill);
-    tankFill.setAttribute("fill", estado.color);
+    actualizarTanque(data.nivel);
   } catch (e) { console.error(e); }
 }
 
@@ -159,8 +195,8 @@ async function actualizarHistorial() {
     if (!grafico) {
       const ctx = document.getElementById("grafico").getContext("2d");
       const gradiente = ctx.createLinearGradient(0, 0, 0, 200);
-      gradiente.addColorStop(0, "rgba(15,118,110,0.35)");
-      gradiente.addColorStop(1, "rgba(15,118,110,0.02)");
+      gradiente.addColorStop(0, "rgba(45,22,80,0.25)");
+      gradiente.addColorStop(1, "rgba(42,120,170,0.02)");
 
       grafico = new Chart(ctx, {
         type: "line",
@@ -170,10 +206,10 @@ async function actualizarHistorial() {
             {
               label: "Nivel de agua (%)",
               data: valores,
-              borderColor: "#0f766e",
+              borderColor: "#2A78AA",
               backgroundColor: gradiente,
               fill: true,
-              tension: 0.3,
+              tension: 0.35,
               pointRadius: 0,
               borderWidth: 2
             },

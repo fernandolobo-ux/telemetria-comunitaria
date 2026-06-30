@@ -50,6 +50,10 @@ app = FastAPI(title="Telemetría Comunitaria", lifespan=lifespan)
 def dashboard():
     return FileResponse("dashboard.html")
 
+@app.get("/umanet_logo.png")
+def logo():
+    return FileResponse("umanet_logo.png")
+
 @app.get("/lecturas/{sitio}")
 def historial(sitio: str):
     query = f'''
@@ -57,6 +61,7 @@ def historial(sitio: str):
       |> range(start: -24h)
       |> filter(fn: (r) => r._measurement == "nivel_agua" and r.sitio == "{sitio}")
       |> filter(fn: (r) => r._field == "nivel")
+      |> aggregateWindow(every: 15m, fn: mean, createEmpty: false)
     '''
     tablas = query_api.query(query)
     resultado = [
