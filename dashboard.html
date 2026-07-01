@@ -297,44 +297,43 @@
     <div class="tanque-contenedor">
       <!-- SVG TANQUE -->
       <div class="tanque-svg-wrap">
-        <svg viewBox="0 0 110 220" width="110" height="220">
+        <svg viewBox="0 0 160 220" width="160" height="220">
           <defs>
             <clipPath id="tankClip">
-              <rect x="14" y="20" width="82" height="176" rx="20"/>
+              <rect x="10" y="20" width="130" height="176" rx="20"/>
             </clipPath>
           </defs>
-          <!-- Fondo del tanque -->
-          <rect x="14" y="20" width="82" height="176" rx="20" fill="#eef2f7"/>
-          <!-- Relleno con ola -->
+          <rect x="10" y="20" width="130" height="176" rx="20" fill="#eef2f7"/>
           <g clip-path="url(#tankClip)">
             <path id="liquidFill" d="" fill="#2A78AA"/>
           </g>
-          <!-- Línea de reserva (20%) -->
-          <line id="reservaLine" x1="14" x2="96" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5,3"/>
-          <!-- Contorno -->
-          <rect x="14" y="20" width="82" height="176" rx="20" fill="none" stroke="#cbd5e1" stroke-width="2.5"/>
+          <line id="reservaLine" x1="10" x2="140" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <rect x="10" y="20" width="130" height="176" rx="20" fill="none" stroke="#cbd5e1" stroke-width="2.5"/>
+
+          <!-- Litros dentro del tanque -->
+          <text id="litrosDentro" x="75" y="115" text-anchor="middle"
+            font-size="30" font-weight="800" fill="white"
+            style="text-shadow: 0 1px 4px rgba(0,0,0,0.3)">--</text>
+          <text x="75" y="136" text-anchor="middle"
+            font-size="13" font-weight="600" fill="rgba(255,255,255,0.85)">litros</text>
+
           <!-- Marcas de escala -->
-          <line x1="98" y1="20" x2="104" y2="20" stroke="#cbd5e1" stroke-width="1.5"/>
-          <text x="107" y="23" font-size="8" fill="#9ca3af">100%</text>
-          <line x1="98" y1="64" x2="104" y2="64" stroke="#cbd5e1" stroke-width="1.5"/>
-          <text x="107" y="67" font-size="8" fill="#9ca3af">75%</text>
-          <line x1="98" y1="108" x2="104" y2="108" stroke="#cbd5e1" stroke-width="1.5"/>
-          <text x="107" y="111" font-size="8" fill="#9ca3af">50%</text>
-          <line x1="98" y1="152" x2="104" y2="152" stroke="#cbd5e1" stroke-width="1.5"/>
-          <text x="107" y="155" font-size="8" fill="#9ca3af">25%</text>
-          <line x1="98" y1="196" x2="104" y2="196" stroke="#cbd5e1" stroke-width="1.5"/>
-          <text x="107" y="199" font-size="8" fill="#9ca3af">0%</text>
+          <line x1="142" y1="20" x2="148" y2="20" stroke="#cbd5e1" stroke-width="1.5"/>
+          <text x="151" y="23" font-size="8" fill="#9ca3af">100%</text>
+          <line x1="142" y1="64" x2="148" y2="64" stroke="#cbd5e1" stroke-width="1.5"/>
+          <text x="151" y="67" font-size="8" fill="#9ca3af">75%</text>
+          <line x1="142" y1="108" x2="148" y2="108" stroke="#cbd5e1" stroke-width="1.5"/>
+          <text x="151" y="111" font-size="8" fill="#9ca3af">50%</text>
+          <line x1="142" y1="152" x2="148" y2="152" stroke="#cbd5e1" stroke-width="1.5"/>
+          <text x="151" y="155" font-size="8" fill="#9ca3af">25%</text>
+          <line x1="142" y1="196" x2="148" y2="196" stroke="#cbd5e1" stroke-width="1.5"/>
+          <text x="151" y="199" font-size="8" fill="#9ca3af">0%</text>
         </svg>
       </div>
 
       <!-- DATOS DERECHA -->
       <div class="tanque-der">
         <div class="badge-pct" id="badgePct">--%</div>
-
-        <div class="litros-dato">
-          <div class="litros-numero" id="litrosNumero">--</div>
-          <div class="litros-label">litros disponibles</div>
-        </div>
 
         <div class="dias-dato">
           <div class="dias-numero" id="diasNumero">--</div>
@@ -443,6 +442,7 @@ function actualizarTanqueSVG(nivel) {
   const estado = colorNivel(nivel);
   document.getElementById("liquidFill").setAttribute("d", path);
   document.getElementById("liquidFill").setAttribute("fill", estado.color);
+  document.getElementById("litrosDentro").setAttribute("fill", nivel < 30 ? "white" : "white");
 
   // línea de reserva (20%)
   const yReserva = bottom - (0.20 * (bottom - top));
@@ -465,7 +465,7 @@ async function actualizarUltimo() {
       "Última lectura: " + new Date(data.momento).toLocaleString("es-AR");
     document.getElementById("badgePct").textContent = nivel.toFixed(1) + "%";
     document.getElementById("badgePct").style.background = estado.color;
-    document.getElementById("litrosNumero").textContent = litros.toLocaleString("es-AR");
+    document.getElementById("litrosDentro").textContent = litros.toLocaleString("es-AR");
 
     actualizarTanqueSVG(nivel);
   } catch (e) { console.error(e); }
