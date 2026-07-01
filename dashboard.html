@@ -2,223 +2,541 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>UMA Net — Telemetría Comunitaria</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
   :root {
     --marca: #2D1650;
-    --marca-azul: #2A78AA;
-    --texto: #1f2937;
+    --azul: #2A78AA;
+    --azul-claro: #e8f4fc;
+    --texto: #1a1a2e;
     --texto-suave: #6b7280;
-    --rojo: #e74c3c;
-    --amarillo: #f1c40f;
-    --fondo: #f7f8fa;
+    --rojo: #dc2626;
+    --amarillo: #d97706;
+    --verde: #2A78AA;
+    --fondo: #f0f4f8;
+    --tarjeta: #ffffff;
+    --borde: #e2e8f0;
   }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
     background: var(--fondo);
-    margin: 0;
     color: var(--texto);
-    font-weight: 400;
+    min-height: 100vh;
+    padding-bottom: 72px;
   }
+
+  /* HEADER */
   header {
-    background: white;
-    padding: 18px 28px;
-    border-bottom: 4px solid;
-    border-image: linear-gradient(90deg, var(--marca), var(--marca-azul)) 1;
-  }
-  header img { height: 38px; display: block; }
-  header p { margin: 6px 0 0; font-size: 13px; color: var(--texto-suave); }
-  main {
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 28px 20px;
-  }
-  .tarjeta {
-    background: white;
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 18px;
-    border: 1px solid #eef0f2;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-  }
-  .tarjeta-titulo {
+    background: var(--marca);
+    padding: 14px 18px 12px;
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 18px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
-  .tarjeta-titulo h2 { margin: 0; font-size: 14px; font-weight: 600; color: var(--texto); }
-  .momento { color: var(--texto-suave); font-size: 12px; }
-  .contenedor-tanque { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-  .estado-texto { font-size: 13px; font-weight: 600; }
-  .boton {
-    background: var(--marca-azul);
+  header img { height: 28px; filter: brightness(0) invert(1); }
+  .version { color: rgba(255,255,255,0.6); font-size: 11px; font-weight: 500; }
+
+  /* CONTENIDO */
+  main { max-width: 480px; margin: 0 auto; padding: 14px 14px 0; }
+
+  /* CLIMA */
+  .clima-widget {
+    background: linear-gradient(135deg, var(--azul) 0%, #1a5a8a 100%);
+    border-radius: 14px;
+    padding: 14px 18px;
     color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 13px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 68px;
+  }
+  .clima-izq { display: flex; align-items: center; gap: 12px; }
+  .clima-icono { font-size: 32px; line-height: 1; }
+  .clima-temp { font-size: 28px; font-weight: 700; line-height: 1; }
+  .clima-desc { font-size: 12px; opacity: 0.85; margin-top: 3px; }
+  .clima-der { text-align: right; }
+  .clima-label { font-size: 10px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.5px; }
+  .clima-valor { font-size: 14px; font-weight: 600; margin-top: 2px; }
+  .clima-loading { font-size: 13px; opacity: 0.7; }
+
+  /* SELECTOR */
+  .selector-fila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding: 0 2px;
+  }
+  .selector-wrapper { position: relative; }
+  .selector-wrapper select {
+    appearance: none;
+    background: var(--tarjeta);
+    border: 1.5px solid var(--borde);
+    border-radius: 10px;
+    padding: 8px 32px 8px 12px;
+    font-size: 14px;
     font-weight: 600;
+    color: var(--texto);
     cursor: pointer;
+    outline: none;
   }
-  .boton:hover { opacity: 0.9; }
-  footer {
-    text-align: center;
-    font-size: 12px;
+  .selector-wrapper::after {
+    content: "▾";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
     color: var(--texto-suave);
-    padding: 24px;
+    pointer-events: none;
+    font-size: 12px;
   }
+  .selector-iconos { display: flex; gap: 10px; }
+  .icono-placeholder {
+    width: 36px; height: 36px;
+    background: var(--tarjeta);
+    border: 1.5px solid var(--borde);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: var(--texto-suave);
+    cursor: default;
+  }
+
+  /* TARJETA TANQUE */
+  .tarjeta {
+    background: var(--tarjeta);
+    border-radius: 16px;
+    border: 1px solid var(--borde);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .tarjeta-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+  }
+  .tarjeta-header-izq h2 { font-size: 14px; font-weight: 700; color: var(--texto); }
+  .tarjeta-fecha { font-size: 11px; color: var(--texto-suave); margin-top: 2px; }
+  .engranaje {
+    width: 32px; height: 32px;
+    background: var(--fondo);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: var(--texto-suave);
+    cursor: default; flex-shrink: 0;
+  }
+
+  /* TANQUE VISUAL */
+  .tanque-contenedor {
+    padding: 8px 16px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .tanque-svg-wrap { flex-shrink: 0; }
+  .tanque-der {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 4px;
+  }
+  .badge-pct {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 26px;
+    font-weight: 800;
+    color: white;
+    min-width: 90px;
+    text-align: center;
+    background: var(--azul);
+  }
+  .litros-dato { }
+  .litros-numero {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--texto);
+    line-height: 1;
+  }
+  .litros-label {
+    font-size: 11px;
+    color: var(--texto-suave);
+    font-weight: 500;
+    margin-top: 2px;
+  }
+  .dias-dato {
+    background: var(--fondo);
+    border-radius: 10px;
+    padding: 8px 12px;
+  }
+  .dias-numero { font-size: 18px; font-weight: 700; color: var(--texto); }
+  .dias-label { font-size: 10px; color: var(--texto-suave); margin-top: 1px; }
+  .reserva-label {
+    font-size: 11px;
+    color: var(--rojo);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 2px;
+  }
+  .reserva-label::before {
+    content: "";
+    display: inline-block;
+    width: 20px; height: 2px;
+    border-top: 2px dashed var(--rojo);
+  }
+
+  /* TARJETA GRAFICO */
+  .grafico-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+  }
+  .grafico-header h2 { font-size: 14px; font-weight: 700; }
+  .boton-csv {
+    background: transparent;
+    border: 1.5px solid var(--borde);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--texto-suave);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .boton-csv:hover { border-color: var(--azul); color: var(--azul); }
+  .grafico-wrap { padding: 0 14px 16px; }
+
+  /* NAVBAR */
+  nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--tarjeta);
+    border-top: 1px solid var(--borde);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0 14px;
+    z-index: 10;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    color: var(--texto-suave);
+    cursor: default;
+  }
+  .nav-item.activo { color: var(--azul); }
+  .nav-item span { font-size: 22px; }
 </style>
 </head>
 <body>
 
 <header>
   <img src="/umanet_logo.png" alt="UMA Net">
-  <p>Telemetría comunitaria — Los Cocos · Humanidad Colaborativa</p>
+  <span class="version">v2.3.0</span>
 </header>
 
 <main>
-  <div class="tarjeta">
-    <div class="tarjeta-titulo">
-      <h2>Nivel del tanque</h2>
-      <span class="momento" id="momento">Cargando...</span>
+
+  <!-- CLIMA -->
+  <div class="clima-widget" id="climaWidget">
+    <div class="clima-izq">
+      <div class="clima-icono" id="climaIcono">⏳</div>
+      <div>
+        <div class="clima-temp" id="climaTemp">--°</div>
+        <div class="clima-desc" id="climaDesc">Cargando clima...</div>
+      </div>
     </div>
-    <div class="contenedor-tanque">
-      <svg viewBox="0 0 170 240" width="170" height="240">
-        <defs>
-          <clipPath id="tankClip">
-            <rect x="20" y="14" width="100" height="190" rx="22"/>
-          </clipPath>
-        </defs>
-        <rect x="20" y="14" width="100" height="190" rx="22" fill="#eef2f6"/>
-        <g clip-path="url(#tankClip)">
-          <path id="liquidPath" d="" fill="#2A78AA"/>
-        </g>
-        <rect x="20" y="14" width="100" height="190" rx="22" fill="none" stroke="#cbd5e1" stroke-width="3"/>
-
-        <line x1="124" y1="14" x2="130" y2="14" stroke="#cbd5e1" stroke-width="1.5"/>
-        <text x="134" y="17" font-size="9" fill="#9ca3af">100%</text>
-        <line x1="124" y1="61.5" x2="130" y2="61.5" stroke="#cbd5e1" stroke-width="1.5"/>
-        <text x="134" y="64.5" font-size="9" fill="#9ca3af">75%</text>
-        <line x1="124" y1="109" x2="130" y2="109" stroke="#cbd5e1" stroke-width="1.5"/>
-        <text x="134" y="112" font-size="9" fill="#9ca3af">50%</text>
-        <line x1="124" y1="156.5" x2="130" y2="156.5" stroke="#cbd5e1" stroke-width="1.5"/>
-        <text x="134" y="159.5" font-size="9" fill="#9ca3af">25%</text>
-        <line x1="124" y1="204" x2="130" y2="204" stroke="#cbd5e1" stroke-width="1.5"/>
-        <text x="134" y="207" font-size="9" fill="#9ca3af">0%</text>
-
-        <rect x="28" y="82" width="84" height="54" rx="12" fill="white" fill-opacity="0.88"/>
-        <text id="tanquePct" x="70" y="108" text-anchor="middle" font-size="24" font-weight="700" fill="#1f2937">--%</text>
-        <text id="tanqueLitros" x="70" y="124" text-anchor="middle" font-size="9.5" fill="#6b7280">Cargando...</text>
-      </svg>
-      <div id="estado" class="estado-texto"></div>
+    <div class="clima-der">
+      <div class="clima-label">Humedad</div>
+      <div class="clima-valor" id="climaHumedad">--%</div>
+      <div class="clima-label" style="margin-top:6px">Los Cocos, Cba.</div>
     </div>
   </div>
 
-  <div class="tarjeta">
-    <div class="tarjeta-titulo">
-      <h2>Histórico — últimas 24 horas</h2>
-      <button class="boton" onclick="descargarCSV()">Descargar CSV</button>
+  <!-- SELECTOR -->
+  <div class="selector-fila">
+    <div class="selector-wrapper">
+      <select id="selectorSitio" onchange="cambiarSitio(this.value)">
+        <option value="los_cocos">Tanque 1 — Los Cocos</option>
+        <option value="" disabled>San Marcos Sierras (próximamente)</option>
+        <option value="" disabled>Mar Chiquita (próximamente)</option>
+      </select>
     </div>
-    <canvas id="grafico" height="110"></canvas>
+    <div class="selector-iconos">
+      <div class="icono-placeholder" title="Inicio">🏠</div>
+      <div class="icono-placeholder" title="Ubicación">📍</div>
+    </div>
   </div>
+
+  <!-- TARJETA TANQUE -->
+  <div class="tarjeta">
+    <div class="tarjeta-header">
+      <div class="tarjeta-header-izq">
+        <h2>Nivel del Tanque</h2>
+        <div class="tarjeta-fecha" id="fechaLectura">Cargando...</div>
+      </div>
+      <div class="engranaje" title="Configuración (próximamente)">⚙️</div>
+    </div>
+
+    <div class="tanque-contenedor">
+      <!-- SVG TANQUE -->
+      <div class="tanque-svg-wrap">
+        <svg viewBox="0 0 110 220" width="110" height="220">
+          <defs>
+            <clipPath id="tankClip">
+              <rect x="14" y="20" width="82" height="176" rx="20"/>
+            </clipPath>
+          </defs>
+          <!-- Fondo del tanque -->
+          <rect x="14" y="20" width="82" height="176" rx="20" fill="#eef2f7"/>
+          <!-- Relleno con ola -->
+          <g clip-path="url(#tankClip)">
+            <path id="liquidFill" d="" fill="#2A78AA"/>
+          </g>
+          <!-- Línea de reserva (20%) -->
+          <line id="reservaLine" x1="14" x2="96" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <!-- Contorno -->
+          <rect x="14" y="20" width="82" height="176" rx="20" fill="none" stroke="#cbd5e1" stroke-width="2.5"/>
+          <!-- Marcas de escala -->
+          <line x1="98" y1="20" x2="104" y2="20" stroke="#cbd5e1" stroke-width="1.5"/>
+          <text x="107" y="23" font-size="8" fill="#9ca3af">100%</text>
+          <line x1="98" y1="64" x2="104" y2="64" stroke="#cbd5e1" stroke-width="1.5"/>
+          <text x="107" y="67" font-size="8" fill="#9ca3af">75%</text>
+          <line x1="98" y1="108" x2="104" y2="108" stroke="#cbd5e1" stroke-width="1.5"/>
+          <text x="107" y="111" font-size="8" fill="#9ca3af">50%</text>
+          <line x1="98" y1="152" x2="104" y2="152" stroke="#cbd5e1" stroke-width="1.5"/>
+          <text x="107" y="155" font-size="8" fill="#9ca3af">25%</text>
+          <line x1="98" y1="196" x2="104" y2="196" stroke="#cbd5e1" stroke-width="1.5"/>
+          <text x="107" y="199" font-size="8" fill="#9ca3af">0%</text>
+        </svg>
+      </div>
+
+      <!-- DATOS DERECHA -->
+      <div class="tanque-der">
+        <div class="badge-pct" id="badgePct">--%</div>
+
+        <div class="litros-dato">
+          <div class="litros-numero" id="litrosNumero">--</div>
+          <div class="litros-label">litros disponibles</div>
+        </div>
+
+        <div class="dias-dato">
+          <div class="dias-numero" id="diasNumero">--</div>
+          <div class="dias-label">días estimados hasta reserva</div>
+        </div>
+
+        <div class="reserva-label">Nivel de Reserva 20%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TARJETA GRÁFICO -->
+  <div class="tarjeta">
+    <div class="grafico-header">
+      <h2>Histórico — 24 horas</h2>
+      <button class="boton-csv" onclick="descargarCSV()">⬇ CSV</button>
+    </div>
+    <div class="grafico-wrap">
+      <canvas id="grafico" height="130"></canvas>
+    </div>
+  </div>
+
 </main>
 
-<footer>
-  Asociación Civil Humanidad Colaborativa — Programa UMA Net
-</footer>
+<!-- NAVBAR -->
+<nav>
+  <div class="nav-item activo">
+    <span>📊</span>
+    <div>Tablero</div>
+  </div>
+  <div class="nav-item">
+    <span>🏠</span>
+    <div>Inicio</div>
+  </div>
+  <div class="nav-item">
+    <span>👤</span>
+    <div>Perfil</div>
+  </div>
+</nav>
 
 <script>
-const SITIO = "los_cocos";
-const CAPACIDADES = { los_cocos: 30000 }; // litros — dato real del tanque
+// ── CONFIGURACIÓN ──────────────────────────────────────────────
+const SITIOS = {
+  los_cocos: {
+    nombre: "Los Cocos",
+    capacidad: 30000,
+    lat: -30.97,
+    lon: -64.47
+  }
+};
+let sitioActual = "los_cocos";
 let ultimosDatos = [];
+let grafico = null;
 
-function colorEstado(nivel) {
-  if (nivel < 20) return { color: "#e74c3c", texto: "Alerta — nivel bajo" };
-  if (nivel < 50) return { color: "#f1c40f", texto: "Atención — nivel medio" };
-  return { color: "#2A78AA", texto: "Nivel normal" };
-}
+// ── CLIMA ──────────────────────────────────────────────────────
+const CLIMA_ICONOS = {
+  0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+  45: "🌫️", 48: "🌫️",
+  51: "🌦️", 53: "🌦️", 55: "🌦️",
+  61: "🌧️", 63: "🌧️", 65: "🌧️",
+  71: "❄️", 73: "❄️", 75: "❄️",
+  80: "🌦️", 81: "🌧️", 82: "⛈️",
+  95: "⛈️", 96: "⛈️", 99: "⛈️"
+};
+const CLIMA_DESC = {
+  0: "Despejado", 1: "Mayormente despejado", 2: "Parcialmente nublado", 3: "Nublado",
+  45: "Niebla", 48: "Niebla helada",
+  51: "Llovizna leve", 53: "Llovizna", 55: "Llovizna intensa",
+  61: "Lluvia leve", 63: "Lluvia", 65: "Lluvia intensa",
+  71: "Nevada leve", 73: "Nevada", 75: "Nevada intensa",
+  80: "Chaparrón leve", 81: "Chaparrón", 82: "Chaparrón intenso",
+  95: "Tormenta", 96: "Tormenta con granizo", 99: "Tormenta fuerte"
+};
 
-function pathOla(y, xIzq, xDer, fondoY, amplitud) {
-  const midX = (xIzq + xDer) / 2;
-  return `M${xIzq},${y} Q${(xIzq+midX)/2},${y-amplitud} ${midX},${y} Q${(midX+xDer)/2},${y+amplitud} ${xDer},${y} L${xDer},${fondoY} L${xIzq},${fondoY} Z`;
-}
-
-function actualizarTanque(nivel) {
-  const top = 14, bottom = 204, izq = 21, der = 119;
-  const pct = Math.max(0, Math.min(100, nivel));
-  const y = bottom - (pct / 100) * (bottom - top);
-
-  document.getElementById("liquidPath").setAttribute("d", pathOla(y, izq, der, bottom, 4));
-
-  const estado = colorEstado(nivel);
-  document.getElementById("liquidPath").setAttribute("fill", estado.color);
-  document.getElementById("estado").textContent = estado.texto;
-  document.getElementById("estado").style.color = estado.color;
-  document.getElementById("tanquePct").textContent = nivel.toFixed(1) + "%";
-
-  const capacidad = CAPACIDADES[SITIO];
-  if (capacidad) {
-    const litros = Math.round((nivel / 100) * capacidad);
-    document.getElementById("tanqueLitros").textContent =
-      `≈ ${litros.toLocaleString("es-AR")} de ${capacidad.toLocaleString("es-AR")} L`;
-  } else {
-    document.getElementById("tanqueLitros").textContent = "Capacidad no configurada";
+async function cargarClima(lat, lon) {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code&timezone=America%2FArgentina%2FCordob`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const c = data.current;
+    const wc = c.weather_code;
+    document.getElementById("climaIcono").textContent = CLIMA_ICONOS[wc] || "🌡️";
+    document.getElementById("climaTemp").textContent = Math.round(c.temperature_2m) + "°C";
+    document.getElementById("climaDesc").textContent = CLIMA_DESC[wc] || "Variable";
+    document.getElementById("climaHumedad").textContent = c.relative_humidity_2m + "%";
+  } catch (e) {
+    document.getElementById("climaDesc").textContent = "Sin datos de clima";
   }
 }
 
+// ── COLORES SEGÚN NIVEL ────────────────────────────────────────
+function colorNivel(nivel) {
+  if (nivel < 20) return { color: "#dc2626", label: "Alerta — Nivel crítico" };
+  if (nivel < 50) return { color: "#d97706", label: "Atención — Nivel medio" };
+  return { color: "#2A78AA", label: "Nivel normal" };
+}
+
+// ── TANQUE SVG ─────────────────────────────────────────────────
+function actualizarTanqueSVG(nivel) {
+  const top = 20, bottom = 196, izq = 15, der = 95;
+  const pct = Math.max(0, Math.min(100, nivel));
+  const y = bottom - ((pct / 100) * (bottom - top));
+  const mid = (izq + der) / 2;
+  const amp = 5;
+  const path = `M${izq},${y} Q${(izq+mid)/2},${y-amp} ${mid},${y} Q${(mid+der)/2},${y+amp} ${der},${y} L${der},${bottom} L${izq},${bottom} Z`;
+  const estado = colorNivel(nivel);
+  document.getElementById("liquidFill").setAttribute("d", path);
+  document.getElementById("liquidFill").setAttribute("fill", estado.color);
+
+  // línea de reserva (20%)
+  const yReserva = bottom - (0.20 * (bottom - top));
+  document.getElementById("reservaLine").setAttribute("y1", yReserva);
+  document.getElementById("reservaLine").setAttribute("y2", yReserva);
+}
+
+// ── DATOS ÚLTIMO ───────────────────────────────────────────────
 async function actualizarUltimo() {
   try {
-    const res = await fetch(`/lecturas/${SITIO}/ultimo`);
+    const res = await fetch(`/lecturas/${sitioActual}/ultimo`);
     if (!res.ok) return;
     const data = await res.json();
-    document.getElementById("momento").textContent = "Última lectura: " + new Date(data.momento).toLocaleString();
-    actualizarTanque(data.nivel);
+    const nivel = data.nivel;
+    const estado = colorNivel(nivel);
+    const sitio = SITIOS[sitioActual];
+    const litros = Math.round((nivel / 100) * sitio.capacidad);
+
+    document.getElementById("fechaLectura").textContent =
+      "Última lectura: " + new Date(data.momento).toLocaleString("es-AR");
+    document.getElementById("badgePct").textContent = nivel.toFixed(1) + "%";
+    document.getElementById("badgePct").style.background = estado.color;
+    document.getElementById("litrosNumero").textContent = litros.toLocaleString("es-AR");
+
+    actualizarTanqueSVG(nivel);
   } catch (e) { console.error(e); }
 }
 
-let grafico;
+// ── DÍAS ESTIMADOS ─────────────────────────────────────────────
+function calcularDias(lecturas) {
+  if (!lecturas || lecturas.length < 2) {
+    document.getElementById("diasNumero").textContent = "--";
+    return;
+  }
+  const primero = lecturas[0].nivel;
+  const ultimo = lecturas[lecturas.length - 1].nivel;
+  const horas = (new Date(lecturas[lecturas.length-1].momento) - new Date(lecturas[0].momento)) / 3600000;
+  if (horas <= 0) { document.getElementById("diasNumero").textContent = "--"; return; }
+  const bajadaPorDia = ((primero - ultimo) / horas) * 24;
+  if (bajadaPorDia <= 0) {
+    document.getElementById("diasNumero").textContent = "↑ subiendo";
+    return;
+  }
+  const nivelActual = ultimo;
+  const nivelReserva = 20;
+  const diasHastaReserva = (nivelActual - nivelReserva) / bajadaPorDia;
+  if (diasHastaReserva < 0) {
+    document.getElementById("diasNumero").textContent = "En reserva";
+  } else if (diasHastaReserva > 999) {
+    document.getElementById("diasNumero").textContent = "+999 días";
+  } else {
+    document.getElementById("diasNumero").textContent = Math.floor(diasHastaReserva) + " días";
+  }
+}
+
+// ── HISTORIAL Y GRÁFICO ────────────────────────────────────────
 async function actualizarHistorial() {
   try {
-    const res = await fetch(`/lecturas/${SITIO}`);
+    const res = await fetch(`/lecturas/${sitioActual}`);
     if (!res.ok) return;
     const data = await res.json();
     ultimosDatos = data.lecturas;
+    calcularDias(ultimosDatos);
 
-    const etiquetas = ultimosDatos.map(l => new Date(l.momento).toLocaleTimeString());
+    const etiquetas = ultimosDatos.map(l => {
+      const d = new Date(l.momento);
+      return d.getHours().toString().padStart(2,"0") + ":" + d.getMinutes().toString().padStart(2,"0");
+    });
     const valores = ultimosDatos.map(l => l.nivel);
     const umbral = valores.map(() => 20);
 
     if (!grafico) {
       const ctx = document.getElementById("grafico").getContext("2d");
-      const gradiente = ctx.createLinearGradient(0, 0, 0, 200);
-      gradiente.addColorStop(0, "rgba(45,22,80,0.25)");
-      gradiente.addColorStop(1, "rgba(42,120,170,0.02)");
-
       grafico = new Chart(ctx, {
         type: "line",
         data: {
           labels: etiquetas,
           datasets: [
             {
-              label: "Nivel de agua (%)",
+              label: "Nivel (%)",
               data: valores,
               borderColor: "#2A78AA",
-              backgroundColor: gradiente,
+              backgroundColor: "rgba(42,120,170,0.08)",
               fill: true,
-              tension: 0.35,
+              tension: 0.4,
               pointRadius: 0,
-              borderWidth: 2
+              borderWidth: 1.5
             },
             {
-              label: "Alerta baja (20%)",
+              label: "Reserva (20%)",
               data: umbral,
-              borderColor: "#e74c3c",
-              borderDash: [5, 5],
-              borderWidth: 1.5,
+              borderColor: "#dc2626",
+              borderDash: [5, 4],
+              borderWidth: 1,
               pointRadius: 0,
               fill: false
             }
@@ -226,36 +544,78 @@ async function actualizarHistorial() {
         },
         options: {
           responsive: true,
-          scales: { y: { min: 0, max: 100 } },
-          plugins: { legend: { display: true, position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } } }
+          interaction: { mode: "index", intersect: false },
+          scales: {
+            x: {
+              ticks: { font: { size: 10 }, maxTicksLimit: 8, color: "#9ca3af" },
+              grid: { display: false }
+            },
+            y: {
+              min: 0, max: 100,
+              ticks: {
+                font: { size: 10 }, color: "#9ca3af",
+                callback: v => v + "%"
+              },
+              grid: { color: "#f1f5f9", lineWidth: 1 }
+            }
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: "bottom",
+              labels: { boxWidth: 10, font: { size: 10 }, color: "#6b7280", padding: 14 }
+            },
+            tooltip: {
+              callbacks: {
+                label: ctx => ctx.dataset.label + ": " + ctx.parsed.y.toFixed(1) + "%"
+              }
+            }
+          }
         }
       });
     } else {
       grafico.data.labels = etiquetas;
       grafico.data.datasets[0].data = valores;
       grafico.data.datasets[1].data = umbral;
-      grafico.update();
+      grafico.update("none");
     }
   } catch (e) { console.error(e); }
 }
 
+// ── CSV ────────────────────────────────────────────────────────
 function descargarCSV() {
   if (!ultimosDatos.length) return;
-  let csv = "momento,nivel\n";
+  let csv = "momento,nivel_pct\n";
   ultimosDatos.forEach(l => { csv += `${l.momento},${l.nivel}\n`; });
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `telemetria_${SITIO}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `telemetria_${sitioActual}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
-actualizarUltimo();
-actualizarHistorial();
-setInterval(actualizarUltimo, 10000);
-setInterval(actualizarHistorial, 30000);
+// ── SELECTOR ──────────────────────────────────────────────────
+function cambiarSitio(valor) {
+  if (!valor || !SITIOS[valor]) return;
+  sitioActual = valor;
+  grafico = null;
+  document.getElementById("grafico").getContext("2d").clearRect(0,0,9999,9999);
+  cargarTodo();
+}
+
+// ── INIT ───────────────────────────────────────────────────────
+function cargarTodo() {
+  const sitio = SITIOS[sitioActual];
+  cargarClima(sitio.lat, sitio.lon);
+  actualizarUltimo();
+  actualizarHistorial();
+}
+
+cargarTodo();
+setInterval(actualizarUltimo, 15000);
+setInterval(actualizarHistorial, 60000);
 </script>
 </body>
 </html>
